@@ -1,0 +1,182 @@
+
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <!-- Latest compiled and minified JavaScript -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+   
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.4/jquery.js"></script>
+    
+
+
+
+<style>
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type=number] {
+  -moz-appearance: textfield;
+}    
+</style>
+
+<script>
+function deleteThousandSeparator(){
+  const cal2_txtLoan = document.getElementById('cal2_txtLoan');
+  cal2_txtLoan.value = cal2_txtLoan.value.replaceAll(",", "") 
+}
+</script>
+                    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
+    
+<script>
+function deleteThousandSeparator(){
+  const cal2_txtLoan = document.getElementById('cal2_txtLoan');
+  cal2_txtLoan.value = cal2_txtLoan.value.replace('.','')
+}
+</script>
+                    <form onsubmit="return deleteThousandSeparator()">
+
+
+                        <div class="row mt20">
+                            <div class="col-md-3 col-sm-12 col-xs-12">
+                            </div>
+                            <div>
+                                <input id="cal2_txtLoan" class="wpcf7-form-control wpcf7-text form-control investment-class-form"  type="text" placeholder="amount">
+                            </div>
+                        </div>
+                        <div class="row mt20">
+
+                            <div class="col-md-6 col-sm-9 col-xs-9">
+                                <input id="cal2_txtTenor" class="wpcf7-form-control wpcf7-text form-control investment-class-form" type="number" placeholder="1-30 years">
+                            </div>
+                        </div>
+                        <div class="row mt20">
+                            <div class="col-md-6 col-sm-9 col-xs-9">
+                                <input id="cal2_txtInterestRate" class="wpcf7-form-control wpcf7-text form-control investment-class-form" type="number" placeholder="percent (%)">
+                            </div>
+                        </div>
+                        <div class="row mt20">
+                            <div class="col-md-offset-3 col-md-6 col-sm-offset-0 col-sm-9 col-xs-offset-0 col-xs-9">
+                                <div class="row">
+                                    <div class="col-xs-6">
+                                        <button type="button" id="cal2_btnCalculate" class="button investment-button">submit</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row mt20">
+                            <div class="col-md-3 col-sm-12 col-xs-12">
+                                <label class="investment-list">Summary of monthly installments</label> <input id="cal2_txtInstallment" class="wpcf7-form-control wpcf7-text form-control investment-class-form" disabled="disabled" type="text"> <span class="investment-list" style="color:red;">* Result is just a guide</span>
+                            </div>
+                        </div>
+                    </form>
+                  
+  
+
+
+<script>
+$(document).ready(function() {
+        $('.project-selector select').change(function() {
+            $.ajax({
+                url: '/project/get-pattern-list?id=' + $(this).val(),
+                type: 'get',
+                /*dataType: 'json',*/
+                success: function(response) {
+                    $('.pattern-selector select').html(response);
+                    if (response.trim() == "") $('.pattern-selector').hide();
+                    else $('.pattern-selector').show();
+                    reload_data();
+                }
+            });
+        });
+        $('.pattern-selector select').change(function() {
+            reload_data();
+        });
+
+        function reload_data() {
+            $.ajax({
+                url: '/project/get-pattern-info?projectid=' + $('.project-selector select').val() + "&id=" + $('.pattern-selector select').val(),
+                type: 'get',
+                dataType: 'json',
+                success: function(response) {
+                    if (response.length > 0) {
+                        $('.pattern-name').text(response[0].name);
+                        $('.pattern-area').text(response[0].total_area);
+                        $('.pattern-price').text(parseInt(response[0].price) );
+                    } else {
+                        $('.pattern-name').text("-");
+                        $('.pattern-area').text("-");
+                        $('.pattern-price').text("-");
+                    }
+                }
+            });
+        }
+
+    
+        function CheckForDigit(checkValue) {
+            var valid = true;
+            if (isNaN(checkValue))
+                valid = false;
+            if (checkValue == "")
+                valid = false;
+            return valid;
+        }
+
+        function FormatNumberToString(nStr) {
+            //nStr = nStr.toFixed(2);
+            nStr += '';
+            x = nStr.split('.');
+            x1 = x[0];
+            x2 = x.length > 1 ? '.' + x[1] : '';
+            var rgx = /(\d+)(\d{3})/;
+            while (rgx.test(x1)) {
+                x1 = x1.replace(rgx, '$1' + ',' + '$2');
+            }
+            return x1 + x2;
+        }
+
+        function CalculatePMT(pv, rate, years) {
+            return Math.round(pv * (rate / 100 / 12) / (1 - 1 / Math.pow ((1 + rate / 100 / 12) , ( years * 12))));
+
+        }
+       
+        /************** CALCULATE 2 *************/
+        $("#cal2_btnCalculate").click(Calculate2);
+
+        function Calculate2(event) {
+            var years = $("#cal2_txtTenor").val()
+            console.log(years)
+            var rate = $("#cal2_txtInterestRate").val();
+            var pv = +$("#cal2_txtLoan").val().replace(/,/g, '');
+            console.log(pv)
+            if (CheckForDigit(years) && CheckForDigit(rate) && CheckForDigit(pv)) {
+                var ir = (rate / 100) * 100; // For LH, add 1 more
+                var installment = CalculatePMT(pv, ir, years);
+                $("#cal2_txtInstallment").val(FormatNumberToString(installment));
+                $("#cal2_txtMinimumIncome").val(FormatNumberToString(installment ));
+            } else
+                alert("processing error");
+        }
+        /*****************************************/
+      
+    });
+
+</script>
+    
+    
+
+<script>
+var cal2_txtLoan = document.getElementById('cal2_txtLoan');
+
+cal2_txtLoan.addEventListener('keyup', function() {
+  var val = this.value;
+  val = val.replace(/[^0-9\.]/g,'');
+  
+  if(val != "") {
+    valArr = val.split('.');
+    valArr[0] = (parseInt(valArr[0],10)).toLocaleString();
+    val = valArr.join('.');
+  }
+  
+  this.value = val;
+});
+</script>
